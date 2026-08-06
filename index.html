@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>James Day — Excel/VBA Automation & Web Development</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #1C1E22;
+    --ink-soft: #3A3D44;
+    --paper: #F6F4EE;
+    --paper-dim: #ECE9E0;
+    --indigo: #5B5FEF;
+    --indigo-dim: #4347C4;
+    --line: rgba(28, 30, 34, 0.12);
+    --white: #FFFFFF;
+  }
+
+  * { box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Inter', sans-serif;
+    line-height: 1.6;
+  }
+
+  a { color: inherit; }
+
+  .wrap {
+    max-width: 1040px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  /* ---------- Nav ---------- */
+  nav {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: rgba(246, 244, 238, 0.92);
+    backdrop-filter: blur(6px);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .nav-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 24px;
+    max-width: 1040px;
+    margin: 0 auto;
+  }
+
+  .nav-mark {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 15px;
+    letter-spacing: -0.01em;
+  }
+
+  .nav-links {
+    display: flex;
+    gap: 28px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 500;
+  }
+
+  .nav-links a {
+    text-decoration: none;
+    color: var(--ink-soft);
+    transition: color 0.15s ease;
+  }
+
+  .nav-links a:hover { color: var(--indigo); }
+
+  @media (max-width: 560px) {
+    .nav-links { gap: 16px; font-size: 11px; }
+  }
+
+  /* ---------- Hero ---------- */
+  header.hero {
+    padding: 96px 0 72px;
+  }
+
+  .eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--indigo-dim);
+    margin-bottom: 18px;
+  }
+
+  h1.headline {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: clamp(34px, 6vw, 56px);
+    line-height: 1.08;
+    letter-spacing: -0.01em;
+    margin: 0 0 22px;
+    max-width: 780px;
+  }
+
+  h1.headline .accent { color: var(--indigo); }
+
+  .hero-sub {
+    font-size: 18px;
+    color: var(--ink-soft);
+    max-width: 560px;
+    margin: 0 0 40px;
+  }
+
+  .hero-ctas {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+    margin-bottom: 56px;
+  }
+
+  .btn {
+    display: inline-block;
+    padding: 13px 24px;
+    border-radius: 3px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+    letter-spacing: 0.01em;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  .btn-primary {
+    background: var(--ink);
+    color: var(--paper);
+  }
+
+  .btn-secondary {
+    background: transparent;
+    color: var(--ink);
+    border: 1.5px solid var(--ink);
+  }
+
+  .btn:hover { transform: translateY(-1px); }
+
+  /* ---------- Signature: chaos-to-order animation ---------- */
+  .signature {
+    position: relative;
+    height: 120px;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    background: var(--white);
+    overflow: hidden;
+  }
+
+  .sig-block {
+    position: absolute;
+    width: 22px;
+    height: 22px;
+    background: var(--indigo);
+    border-radius: 2px;
+    opacity: 0.85;
+    animation: settle 3.6s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+  }
+
+  .sig-caption {
+    position: absolute;
+    bottom: 8px;
+    right: 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    opacity: 0.55;
+  }
+
+  @keyframes settle {
+    0%   { transform: translate(var(--x0), var(--y0)) rotate(var(--r0)); opacity: 0.5; }
+    45%, 55% { transform: translate(var(--xf), var(--yf)) rotate(0deg); opacity: 1; }
+    95%, 100% { transform: translate(var(--x0), var(--y0)) rotate(var(--r0)); opacity: 0.5; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .sig-block { animation: none !important; transform: translate(var(--xf), var(--yf)) rotate(0deg); opacity: 1; }
+  }
+
+  /* ---------- Section shared ---------- */
+  section { padding: 64px 0; border-top: 1px solid var(--line); }
+
+  .section-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--indigo-dim);
+    margin-bottom: 12px;
+  }
+
+  h2 {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: clamp(24px, 3.4vw, 32px);
+    font-weight: 700;
+    margin: 0 0 32px;
+    letter-spacing: -0.01em;
+  }
+
+  /* ---------- Experience ---------- */
+  .exp-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+
+  @media (max-width: 640px) {
+    .exp-stats { grid-template-columns: 1fr; }
+  }
+
+  .stat-card {
+    background: var(--white);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 20px;
+  }
+
+  .stat-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 30px;
+    color: var(--indigo);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .stat-cap {
+    font-size: 13px;
+    color: var(--ink-soft);
+    margin-top: 4px;
+  }
+
+  .exp-body { max-width: 680px; color: var(--ink-soft); font-size: 16px; }
+  .exp-body strong { color: var(--ink); }
+
+  /* ---------- Services ---------- */
+  .service-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+
+  @media (max-width: 640px) {
+    .service-grid { grid-template-columns: 1fr; }
+  }
+
+  .service-card {
+    background: var(--white);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 22px;
+  }
+
+  .service-card .num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--indigo);
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+
+  .service-card h3 {
+    font-family: 'Inter', sans-serif;
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0 0 6px;
+  }
+
+  .service-card p {
+    font-size: 14px;
+    color: var(--ink-soft);
+    margin: 0;
+  }
+
+  /* ---------- Projects ---------- */
+  .project {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+    align-items: center;
+    margin-bottom: 56px;
+  }
+
+  .project:last-child { margin-bottom: 0; }
+
+  @media (max-width: 760px) {
+    .project { grid-template-columns: 1fr; }
+  }
+
+  .project-shot {
+    width: 100%;
+    border-radius: 4px;
+    border: 1px solid var(--line);
+    display: block;
+  }
+
+  .project-shot-frame {
+    border-radius: 4px;
+    overflow: hidden;
+    border: 1px solid var(--line);
+  }
+
+  .project h3 {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 20px;
+    font-weight: 700;
+    margin: 0 0 12px;
+  }
+
+  .project p {
+    color: var(--ink-soft);
+    font-size: 15px;
+    margin: 0 0 18px;
+  }
+
+  .project-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 20px;
+  }
+
+  .tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    padding: 4px 9px;
+    background: var(--paper-dim);
+    border-radius: 20px;
+    color: var(--ink-soft);
+  }
+
+  .project-links { display: flex; gap: 12px; flex-wrap: wrap; }
+
+  .link-btn {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+    color: var(--indigo-dim);
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .link-btn:hover { color: var(--indigo); }
+
+  /* ---------- Skills ---------- */
+  .skills-wrap { display: flex; flex-wrap: wrap; gap: 8px; }
+
+  .skill-pill {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    padding: 7px 13px;
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    background: var(--white);
+  }
+
+  /* ---------- Contact / footer ---------- */
+  footer {
+    padding: 64px 0 48px;
+    border-top: 1px solid var(--line);
+  }
+
+  .contact-block {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: 24px;
+  }
+
+  footer h2 { margin-bottom: 12px; }
+
+  .footer-sub { color: var(--ink-soft); font-size: 15px; max-width: 460px; }
+
+  .footer-links {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .footer-meta {
+    margin-top: 48px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-soft);
+    opacity: 0.6;
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <div class="nav-mark">JAMES DAY</div>
+    <div class="nav-links">
+      <a href="#work">Work</a>
+      <a href="#services">Services</a>
+      <a href="#skills">Skills</a>
+      <a href="#contact">Contact</a>
+    </div>
+  </div>
+</nav>
+
+<div class="wrap">
+  <header class="hero">
+    <div class="eyebrow">Excel/VBA Automation &amp; Web Development</div>
+    <h1 class="headline">I turn <span class="accent">repetitive work</span> into something automatic.</h1>
+    <p class="hero-sub">Sole developer, 11 years building and maintaining business-critical spreadsheet and web tools — now taking on Excel/VBA automation and small web builds as a freelancer.</p>
+    <div class="hero-ctas">
+      <a class="btn btn-primary" href="#work">See the work</a>
+      <a class="btn btn-secondary" href="#contact">Get in touch</a>
+    </div>
+
+    <div class="signature" id="signature" aria-hidden="true">
+      <div class="sig-caption">messy input → automated output</div>
+    </div>
+  </header>
+
+  <section id="experience">
+    <div class="section-label">Track Record</div>
+    <h2>Eleven years of ownership, not just output.</h2>
+    <div class="exp-stats">
+      <div class="stat-card">
+        <div class="stat-num">5 yrs</div>
+        <div class="stat-cap">Sole developer &amp; maintainer of a business-critical HTML/JS/CSS application</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">20K+</div>
+        <div class="stat-cap">Orders processed monthly by the systems I built</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">$500K+</div>
+        <div class="stat-cap">In inventory managed through the tools I maintained</div>
+      </div>
+    </div>
+    <p class="exp-body">For 5 years, I was the <strong>sole developer and maintainer</strong> of a custom HTML/JavaScript/CSS application used daily by an 8-person team — preceded by 6 years designing and running the Excel-based system it replaced. I own the full lifecycle: requirements, development, testing, deployment, and ongoing iteration. I'd rather spend an extra hour catching an edge case than ship something that breaks under real use.</p>
+  </section>
+
+  <section id="services">
+    <div class="section-label">What I Build</div>
+    <h2>Two problems, one instinct: eliminate the busywork.</h2>
+    <div class="service-grid">
+      <div class="service-card">
+        <div class="num">01</div>
+        <h3>Excel/VBA Macros</h3>
+        <p>Custom macros that automate repetitive spreadsheet tasks — from data cleanup to one-click report generation.</p>
+      </div>
+      <div class="service-card">
+        <div class="num">02</div>
+        <h3>Excel Dashboards &amp; Templates</h3>
+        <p>Structured, formula-driven workbooks that turn raw data into something a client can actually read.</p>
+      </div>
+      <div class="service-card">
+        <div class="num">03</div>
+        <h3>Simple Business Websites</h3>
+        <p>Fast, no-framework HTML/CSS/JS sites — no bloat, no unnecessary dependencies, built to load instantly.</p>
+      </div>
+      <div class="service-card">
+        <div class="num">04</div>
+        <h3>Small Web Tools &amp; Calculators</h3>
+        <p>Embeddable, interactive tools — quote calculators, form logic, live data processing — for an existing site.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="work">
+    <div class="section-label">Selected Work</div>
+    <h2>Two demos, built to show the range.</h2>
+
+    <div class="project">
+      <div class="project-shot-frame">
+        <img class="project-shot" src="invoice_thumb.jpg" alt="Screenshot of the automated invoice generator, showing a populated invoice for Dana Whitfield with a $1,155 total due.">
+      </div>
+      <div>
+        <h3>Automated Invoice Generator</h3>
+        <p>A client hands over a raw, messy order spreadsheet. Selecting a customer from a dropdown auto-populates the entire invoice — contact info, line items, subtotal, tax, and total — via INDEX/MATCH/COUNTIF formulas. A companion VBA macro adds one-click PDF export.</p>
+        <div class="project-tags">
+          <span class="tag">Excel Macros</span>
+          <span class="tag">VBA</span>
+          <span class="tag">Task Automation</span>
+        </div>
+        <div class="project-links">
+          <a class="link-btn" href="Invoice_Generator_Portfolio.xlsx" download>&#8595; Download the workbook</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="project">
+      <div class="project-shot-frame">
+        <img class="project-shot" src="moving_thumb.jpg" alt="Screenshot of the Cascade Moving Co. instant quote calculator, showing a live price estimate of $743 to $924.">
+      </div>
+      <div>
+        <h3>Instant Quote Calculator</h3>
+        <p>A moving company needed a quote calculator customers could use themselves, instead of waiting on a callback. Selecting home size, distance, and add-ons updates the price range, crew size, and hours live — pure HTML/CSS/JS, no backend.</p>
+        <div class="project-tags">
+          <span class="tag">HTML/CSS/JS</span>
+          <span class="tag">Responsive Design</span>
+          <span class="tag">Form Logic</span>
+        </div>
+        <div class="project-links">
+          <a class="link-btn" href="quote-calculator.html" target="_blank">&#8594; Try it live</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="skills">
+    <div class="section-label">Toolkit</div>
+    <h2>What I actually work with.</h2>
+    <div class="skills-wrap">
+      <span class="skill-pill">Excel Macros</span>
+      <span class="skill-pill">Visual Basic for Applications</span>
+      <span class="skill-pill">Task Automation</span>
+      <span class="skill-pill">Spreadsheet Automation</span>
+      <span class="skill-pill">Microsoft Excel</span>
+      <span class="skill-pill">OLE Automation</span>
+      <span class="skill-pill">HTML</span>
+      <span class="skill-pill">CSS</span>
+      <span class="skill-pill">JavaScript</span>
+      <span class="skill-pill">Web Development</span>
+      <span class="skill-pill">Front-End Development</span>
+      <span class="skill-pill">Responsive Design</span>
+    </div>
+  </section>
+
+  <footer id="contact">
+    <div class="contact-block">
+      <div>
+        <h2 style="margin-bottom:12px;">Have a repetitive task or a small build in mind?</h2>
+        <p class="footer-sub">I'm currently taking on new Excel/VBA automation and small web development projects.</p>
+      </div>
+      <div class="footer-links">
+        <a class="btn btn-primary" href="mailto:hello@example.com">Email me</a>
+      </div>
+    </div>
+    <div class="footer-meta">JAMES DAY — BUILT WITH HTML, CSS &amp; VANILLA JS. NO FRAMEWORK.</div>
+  </footer>
+</div>
+
+<script>
+(function () {
+  const stage = document.getElementById('signature');
+  const COUNT = 10;
+  const stageW = stage.clientWidth;
+  const stageH = stage.clientHeight;
+  const cols = 5, rows = 2;
+  const cellW = stageW / cols, cellH = stageH / rows;
+
+  for (let i = 0; i < COUNT; i++) {
+    const block = document.createElement('div');
+    block.className = 'sig-block';
+
+    const col = i % cols, row = Math.floor(i / cols);
+    const xf = col * cellW + (cellW - 22) / 2;
+    const yf = row * cellH + (cellH - 22) / 2;
+
+    const x0 = Math.random() * (stageW - 22);
+    const y0 = Math.random() * (stageH - 22);
+    const r0 = (Math.random() * 60 - 30).toFixed(1) + 'deg';
+
+    block.style.setProperty('--x0', x0.toFixed(1) + 'px');
+    block.style.setProperty('--y0', y0.toFixed(1) + 'px');
+    block.style.setProperty('--xf', xf.toFixed(1) + 'px');
+    block.style.setProperty('--yf', yf.toFixed(1) + 'px');
+    block.style.setProperty('--r0', r0);
+    block.style.animationDelay = (i * 0.12) + 's';
+
+    stage.appendChild(block);
+  }
+})();
+</script>
+
+</body>
+</html>

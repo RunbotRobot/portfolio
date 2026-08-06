@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cascade Moving Co. — Instant Move Estimate</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --forest-900: #16302A;
+    --forest-700: #23503F;
+    --forest-500: #2F6B52;
+    --amber-500: #E8A33D;
+    --amber-600: #CE8A26;
+    --paper-50: #EEEAE0;
+    --paper-100: #F5F2EA;
+    --ink-900: #201D18;
+    --ink-600: #514C42;
+    --line: rgba(22, 48, 42, 0.14);
+    --white: #FFFFFF;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--paper-50);
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 32px 32px;
+    color: var(--ink-900);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    padding: 24px 16px 64px;
+  }
+
+  .wrap {
+    max-width: 980px;
+    margin: 0 auto;
+  }
+
+  header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px 24px;
+    margin-bottom: 36px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid var(--forest-900);
+  }
+
+  .brand {
+    font-family: 'Oswald', sans-serif;
+    font-weight: 700;
+    font-size: clamp(24px, 4vw, 34px);
+    letter-spacing: 0.02em;
+    color: var(--forest-900);
+    text-transform: uppercase;
+  }
+
+  .brand span { color: var(--amber-600); }
+
+  .eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-600);
+  }
+
+  main {
+    display: grid;
+    grid-template-columns: 1.1fr 1fr;
+    gap: 28px;
+  }
+
+  @media (max-width: 780px) {
+    main { grid-template-columns: 1fr; }
+  }
+
+  .panel {
+    background: var(--paper-100);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 28px;
+  }
+
+  .section-title {
+    font-family: 'Oswald', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--forest-700);
+    margin: 0 0 14px;
+  }
+
+  fieldset {
+    border: none;
+    padding: 0;
+    margin: 0 0 26px;
+  }
+
+  legend {
+    font-family: 'Oswald', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--forest-900);
+    margin-bottom: 10px;
+    padding: 0;
+  }
+
+  .home-size-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+  }
+
+  @media (max-width: 480px) {
+    .home-size-grid { grid-template-columns: repeat(3, 1fr); }
+  }
+
+  .size-option {
+    position: relative;
+  }
+
+  .size-option input {
+    position: absolute;
+    opacity: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    cursor: pointer;
+  }
+
+  .size-option label {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 10px 4px;
+    border: 1.5px solid var(--line);
+    border-radius: 3px;
+    background: var(--white);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--ink-600);
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+  }
+
+  .size-option input:checked + label {
+    border-color: var(--forest-900);
+    background: var(--forest-900);
+    color: var(--paper-100);
+  }
+
+  .size-option input:focus-visible + label {
+    outline: 2px solid var(--amber-600);
+    outline-offset: 2px;
+  }
+
+  .distance-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  input[type="range"] {
+    flex: 1;
+    accent-color: var(--forest-900);
+  }
+
+  .distance-readout {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 15px;
+    color: var(--forest-900);
+    min-width: 68px;
+    text-align: right;
+  }
+
+  .addon-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .addon {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border: 1.5px solid var(--line);
+    border-radius: 3px;
+    background: var(--white);
+    cursor: pointer;
+    transition: border-color 0.15s ease;
+  }
+
+  .addon:has(input:checked) {
+    border-color: var(--amber-600);
+    background: #FBF3E3;
+  }
+
+  .addon input {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--amber-600);
+    cursor: pointer;
+  }
+
+  .addon-label {
+    font-size: 14px;
+    font-weight: 500;
+    flex: 1;
+  }
+
+  .addon-price {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--ink-600);
+  }
+
+  /* ---- Output panel ---- */
+  .output-panel {
+    background: var(--forest-900);
+    color: var(--paper-100);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .output-panel .section-title { color: var(--amber-500); }
+
+  .truck-stage {
+    position: relative;
+    height: 96px;
+    margin: 4px 0 22px;
+  }
+
+  .truck-svg { width: 100%; height: 100%; display: block; }
+
+  .truck-fill {
+    transition: width 0.5s cubic-bezier(0.65, 0, 0.35, 1);
+  }
+
+  .box-icon {
+    opacity: 0;
+    transform: translateY(6px);
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+
+  .box-icon.show {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .price-block {
+    text-align: center;
+    padding: 18px 0 22px;
+    border-top: 1px solid rgba(245, 242, 234, 0.18);
+    border-bottom: 1px solid rgba(245, 242, 234, 0.18);
+    margin-bottom: 20px;
+  }
+
+  .price-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(245, 242, 234, 0.65);
+    margin-bottom: 6px;
+  }
+
+  .price-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: clamp(30px, 5vw, 42px);
+    letter-spacing: -0.01em;
+    color: var(--amber-500);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .stat-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+
+  .stat {
+    background: rgba(245, 242, 234, 0.06);
+    border: 1px solid rgba(245, 242, 234, 0.14);
+    border-radius: 3px;
+    padding: 12px 14px;
+  }
+
+  .stat-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(245, 242, 234, 0.6);
+    margin-bottom: 4px;
+  }
+
+  .stat-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 20px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .breakdown {
+    font-size: 13px;
+    color: rgba(245, 242, 234, 0.85);
+    line-height: 1.7;
+    margin-bottom: 20px;
+  }
+
+  .breakdown div {
+    display: flex;
+    justify-content: space-between;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+  }
+
+  .breakdown div span:last-child { font-weight: 700; }
+
+  .disclaimer {
+    margin-top: auto;
+    font-size: 11px;
+    line-height: 1.5;
+    color: rgba(245, 242, 234, 0.55);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div>
+      <div class="eyebrow">Instant Move Estimate</div>
+      <div class="brand">Cascade <span>Moving Co.</span></div>
+    </div>
+    <div class="eyebrow">Serving the Puget Sound region</div>
+  </header>
+
+  <main>
+    <div class="panel">
+      <div class="section-title">Tell us about your move</div>
+
+      <fieldset>
+        <legend>Home size</legend>
+        <div class="home-size-grid" id="homeSizeGrid">
+          <div class="size-option">
+            <input type="radio" name="homeSize" id="size-studio" value="studio">
+            <label for="size-studio">Studio</label>
+          </div>
+          <div class="size-option">
+            <input type="radio" name="homeSize" id="size-1br" value="1br" checked>
+            <label for="size-1br">1 BR</label>
+          </div>
+          <div class="size-option">
+            <input type="radio" name="homeSize" id="size-2br" value="2br">
+            <label for="size-2br">2 BR</label>
+          </div>
+          <div class="size-option">
+            <input type="radio" name="homeSize" id="size-3br" value="3br">
+            <label for="size-3br">3 BR</label>
+          </div>
+          <div class="size-option">
+            <input type="radio" name="homeSize" id="size-4br" value="4br">
+            <label for="size-4br">4+ BR</label>
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Move distance</legend>
+        <div class="distance-row">
+          <input type="range" id="distance" min="1" max="200" value="12">
+          <span class="distance-readout" id="distanceReadout">12 mi</span>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Additional services</legend>
+        <div class="addon-list">
+          <label class="addon">
+            <input type="checkbox" id="addon-packing">
+            <span class="addon-label">Full packing service</span>
+            <span class="addon-price">+25% labor</span>
+          </label>
+          <label class="addon">
+            <input type="checkbox" id="addon-heavy">
+            <span class="addon-label">Heavy item (piano, safe, etc.)</span>
+            <span class="addon-price">+$150</span>
+          </label>
+          <label class="addon">
+            <input type="checkbox" id="addon-stairs">
+            <span class="addon-label">Stairs / no elevator access</span>
+            <span class="addon-price">+$75</span>
+          </label>
+          <label class="addon">
+            <input type="checkbox" id="addon-storage">
+            <span class="addon-label">30-day storage</span>
+            <span class="addon-price">+$120</span>
+          </label>
+        </div>
+      </fieldset>
+    </div>
+
+    <div class="panel output-panel">
+      <div class="section-title">Your estimate</div>
+
+      <div class="truck-stage">
+        <svg class="truck-svg" viewBox="0 0 300 96" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Truck load visualization">
+          <!-- truck outline -->
+          <rect x="4" y="20" width="200" height="56" rx="4" fill="none" stroke="#F5F2EA" stroke-width="2.5"/>
+          <path d="M204 40 h34 l24 20 v16 h-58 z" fill="none" stroke="#F5F2EA" stroke-width="2.5" stroke-linejoin="round"/>
+          <circle cx="60" cy="80" r="10" fill="#16302A" stroke="#F5F2EA" stroke-width="2.5"/>
+          <circle cx="230" cy="80" r="10" fill="#16302A" stroke="#F5F2EA" stroke-width="2.5"/>
+          <!-- fill clip -->
+          <clipPath id="truckClip">
+            <rect x="6" y="22" width="196" height="52" rx="3"/>
+          </clipPath>
+          <rect id="truckFill" class="truck-fill" x="6" y="22" width="0" height="52" fill="#E8A33D" clip-path="url(#truckClip)" opacity="0.85"/>
+        </svg>
+      </div>
+
+      <div class="price-block">
+        <div class="price-label">Estimated total</div>
+        <div class="price-value" id="priceValue">$0 – $0</div>
+      </div>
+
+      <div class="stat-grid">
+        <div class="stat">
+          <div class="stat-label">Crew size</div>
+          <div class="stat-value" id="statCrew">—</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Est. hours</div>
+          <div class="stat-value" id="statHours">—</div>
+        </div>
+      </div>
+
+      <div class="breakdown" id="breakdown"></div>
+
+      <div class="disclaimer">
+        Estimates are non-binding and based on typical conditions. Final quote confirmed after an on-site or virtual walkthrough.
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+(function () {
+  const HOME_DATA = {
+    studio: { crew: 2, hours: 3,   loadPct: 20 },
+    '1br':  { crew: 2, hours: 4,   loadPct: 38 },
+    '2br':  { crew: 3, hours: 5,   loadPct: 58 },
+    '3br':  { crew: 3, hours: 6.5, loadPct: 78 },
+    '4br':  { crew: 4, hours: 8,   loadPct: 96 },
+  };
+
+  const HOURLY_RATE = 55; // per mover, per hour
+  const MILEAGE_RATE = 2.5; // per mile beyond free radius
+  const FREE_MILES = 20;
+
+  const distanceInput = document.getElementById('distance');
+  const distanceReadout = document.getElementById('distanceReadout');
+  const priceValue = document.getElementById('priceValue');
+  const statCrew = document.getElementById('statCrew');
+  const statHours = document.getElementById('statHours');
+  const breakdown = document.getElementById('breakdown');
+  const truckFill = document.getElementById('truckFill');
+
+  const addonPacking = document.getElementById('addon-packing');
+  const addonHeavy = document.getElementById('addon-heavy');
+  const addonStairs = document.getElementById('addon-stairs');
+  const addonStorage = document.getElementById('addon-storage');
+
+  function currentHomeKey() {
+    return document.querySelector('input[name="homeSize"]:checked').value;
+  }
+
+  function fmt(n) {
+    return '$' + Math.round(n).toLocaleString('en-US');
+  }
+
+  function calculate() {
+    const home = HOME_DATA[currentHomeKey()];
+    const distance = parseInt(distanceInput.value, 10);
+    distanceReadout.textContent = distance + ' mi';
+
+    let labor = home.crew * HOURLY_RATE * home.hours;
+    let packingFee = 0;
+    if (addonPacking.checked) {
+      packingFee = labor * 0.25;
+    }
+
+    const extraMiles = Math.max(0, distance - FREE_MILES);
+    const mileageFee = extraMiles * MILEAGE_RATE;
+
+    let flatFees = 0;
+    if (addonHeavy.checked) flatFees += 150;
+    if (addonStairs.checked) flatFees += 75;
+    if (addonStorage.checked) flatFees += 120;
+
+    const subtotal = labor + packingFee + mileageFee + flatFees;
+    const low = subtotal * 0.9;
+    const high = subtotal * 1.12;
+
+    priceValue.textContent = fmt(low) + ' – ' + fmt(high);
+    statCrew.textContent = home.crew + (home.crew === 1 ? ' mover' : ' movers');
+    statHours.textContent = '~' + home.hours + ' hrs';
+
+    const rows = [
+      ['Labor (' + home.crew + ' movers × ' + home.hours + ' hrs)', fmt(labor)],
+    ];
+    if (packingFee > 0) rows.push(['Full packing service (+25%)', fmt(packingFee)]);
+    if (mileageFee > 0) rows.push(['Mileage (' + extraMiles + ' mi over local radius)', fmt(mileageFee)]);
+    if (addonHeavy.checked) rows.push(['Heavy item handling', fmt(150)]);
+    if (addonStairs.checked) rows.push(['Stairs / no elevator', fmt(75)]);
+    if (addonStorage.checked) rows.push(['30-day storage', fmt(120)]);
+
+    breakdown.innerHTML = rows.map(function (r) {
+      return '<div><span>' + r[0] + '</span><span>' + r[1] + '</span></div>';
+    }).join('');
+
+    // Truck fill visualization
+    const pct = home.loadPct;
+    const maxWidth = 196;
+    truckFill.setAttribute('width', (maxWidth * pct / 100).toFixed(1));
+  }
+
+  document.getElementById('homeSizeGrid').addEventListener('change', calculate);
+  distanceInput.addEventListener('input', calculate);
+  [addonPacking, addonHeavy, addonStairs, addonStorage].forEach(function (el) {
+    el.addEventListener('change', calculate);
+  });
+
+  calculate();
+})();
+</script>
+</body>
+</html>
