@@ -67,7 +67,7 @@
   .grid-line { stroke: var(--line); stroke-width: 1; }
   .bar { fill: var(--indigo); }
   .bar:hover { fill: var(--indigo-dim); }
-  .chart-label { font-size: 9px; fill: var(--ink-soft); }
+  .chart-label { font-size: 13px; fill: var(--ink-soft); }
   .rank-list { list-style: none; margin: 0; padding: 0; }
   .rank-list li { display: grid; grid-template-columns: 22px 1fr auto; gap: 8px; align-items: center; padding: 11px 0; border-bottom: 1px solid var(--line); font-size: 13px; }
   .rank-list li:last-child { border-bottom: 0; }
@@ -80,7 +80,8 @@
   th { position: sticky; top: 0; background: var(--paper-dim); text-align: left; font-size: 10px; letter-spacing: .06em; text-transform: uppercase; z-index: 1; }
   th, td { padding: 11px 13px; border-bottom: 1px solid var(--line); }
   tbody tr:last-child td { border-bottom: 0; }
-  td.num { font-family: 'JetBrains Mono'; text-align: right; font-variant-numeric: tabular-nums; }
+  th.num, td.num { text-align: right; }
+  td.num { font-family: 'JetBrains Mono'; font-variant-numeric: tabular-nums; }
   .review-panel { border-color: rgba(154,91,22,.3); background: var(--warning-bg); }
   .problem { color: var(--warning); font-weight: 600; }
   .empty { color: var(--ink-soft); font-size: 13px; padding: 18px 0 4px; }
@@ -102,7 +103,7 @@
     <div class="drop-zone" id="dropZone">
       <div class="drop-icon" aria-hidden="true">⇧</div>
       <h2 id="uploadTitle">Drop your orders CSV here</h2>
-      <p>CSV files only · expected fields: date, customer, product, quantity, amount</p>
+      <p>CSV files only · expected fields: date, customer, product, quantity, total amount (line/order total, not unit price)</p>
       <div class="actions">
         <label class="btn btn-primary" for="fileInput">Choose CSV file</label>
         <input id="fileInput" type="file" accept=".csv,text/csv">
@@ -141,7 +142,7 @@
     </div>
     <section class="panel table-panel">
       <div class="section-head"><div><h2>Cleaned orders</h2><p>Trimmed, normalized, and deduplicated.</p></div><span class="badge" id="cleanCount"></span></div>
-      <div class="table-scroll"><table><thead><tr><th>Date</th><th>Customer</th><th>Product</th><th>Quantity</th><th>Amount</th></tr></thead><tbody id="cleanBody"></tbody></table></div>
+      <div class="table-scroll"><table><thead><tr><th>Date</th><th>Customer</th><th>Product</th><th class="num">Quantity</th><th class="num">Total</th></tr></thead><tbody id="cleanBody"></tbody></table></div>
     </section>
     <section class="panel review-panel">
       <div class="section-head"><div><h2>Needs review</h2><p>Incomplete or invalid rows are kept here, not discarded.</p></div><span class="badge" id="reviewCount"></span></div>
@@ -154,6 +155,10 @@
 (() => {
   'use strict';
   const fields = ['date', 'customer', 'product', 'quantity', 'amount'];
+  const fieldLabels = {
+    date: 'Date', customer: 'Customer', product: 'Product', quantity: 'Quantity',
+    amount: 'Total amount (price × quantity for the row — not a per-unit price)'
+  };
   const aliases = {
     date: ['date', 'order date', 'transaction date', 'sale date'], customer: ['customer', 'customer name', 'client', 'buyer'],
     product: ['product', 'product name', 'item', 'item name', 'description'], quantity: ['quantity', 'qty', 'units', 'count'],
@@ -254,7 +259,7 @@
     $('results').classList.remove('visible'); $('mappingPanel').hidden = false; $('mappingGrid').innerHTML = '';
     missing.forEach(field => {
       const wrap = document.createElement('div'); const label = document.createElement('label'); const select = document.createElement('select');
-      label.textContent = `Column for ${field}`; label.htmlFor = `map-${field}`; select.id = `map-${field}`; select.dataset.field = field;
+      label.textContent = `Column for ${fieldLabels[field] || field}`; label.htmlFor = `map-${field}`; select.id = `map-${field}`; select.dataset.field = field;
       select.innerHTML = '<option value="">Choose a column…</option>' + source.headers.map((h, i) => `<option value="${i}">${escapeHTML(h)}</option>`).join('');
       wrap.append(label, select); $('mappingGrid').append(wrap);
     });
@@ -309,7 +314,7 @@
     const daily = (maxDate - min) / 86400000 < 31, totals = new Map();
     cleaned.forEach(r => { const d = parsedDate(r.date); const key = isoDate(daily ? d : monday(d)); totals.set(key, (totals.get(key) || 0) + r.amount); });
     const points = [...totals].sort((a,b) => a[0].localeCompare(b[0])), max = Math.max(...points.map(p => p[1]), 1);
-    const width = Math.max(520, points.length * 28 + 68), height = 235, left = 48, top = 10, bottom = 38, plotH = height - top - bottom, plotW = width - left - 12;
+    const width = Math.max(520, points.length * 28 + 78), height = 245, left = 58, top = 10, bottom = 40, plotH = height - top - bottom, plotW = width - left - 12;
     let svg = `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="${daily ? 'Daily' : 'Weekly'} revenue bar chart">`;
     for (let i = 0; i <= 4; i++) { const y = top + plotH * i / 4, value = max * (1 - i / 4); svg += `<line class="grid-line" x1="${left}" y1="${y}" x2="${width-12}" y2="${y}"/><text class="chart-label" x="${left-5}" y="${y+3}" text-anchor="end">$${Math.round(value)}</text>`; }
     const slot = plotW / points.length, barW = Math.max(6, Math.min(22, slot * .62)), labelEvery = Math.max(1, Math.ceil(points.length / 8));
@@ -322,11 +327,12 @@
   }
   function renderTables() {
     $('cleanBody').innerHTML = cleaned.map(r => rowHTML(r)).join('');
-    $('reviewContent').innerHTML = review.length ? `<div class="table-scroll"><table><thead><tr><th>Date</th><th>Customer</th><th>Product</th><th>Quantity</th><th>Amount</th><th>Problem</th></tr></thead><tbody>${review.map(r => rowHTML(r, true)).join('')}</tbody></table></div>` : '<p class="empty">Nothing needs review. Every unique row is complete.</p>';
+    $('reviewContent').innerHTML = review.length ? `<div class="table-scroll"><table><thead><tr><th>Date</th><th>Customer</th><th>Product</th><th class="num">Quantity</th><th class="num">Total</th><th>Problem</th></tr></thead><tbody>${review.map(r => rowHTML(r, true)).join('')}</tbody></table></div>` : '<p class="empty">Nothing needs review. Every unique row is complete.</p>';
   }
   function csvCell(value) { const text = String(value); return /[",\r\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text; }
   function exportCSV() {
-    const content = [fields.join(','), ...cleaned.map(r => fields.map(field => csvCell(r[field])).join(','))].join('\r\n');
+    const csvHeaders = ['Date', 'Customer', 'Product', 'Quantity', 'Total'];
+    const content = [csvHeaders.join(','), ...cleaned.map(r => fields.map(field => csvCell(r[field])).join(','))].join('\r\n');
     const blob = new Blob([content], { type: 'text/csv;charset=utf-8' }), link = document.createElement('a');
     link.href = URL.createObjectURL(blob); link.download = `cleaned_${source.filename.replace(/\.csv$/i, '')}.csv`; link.click(); setTimeout(() => URL.revokeObjectURL(link.href), 0);
   }
