@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Order Cleanup &amp; Report — James Day</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #1C1E22; --ink-soft: #3A3D44; --paper: #F6F4EE; --paper-dim: #ECE9E0;
+    --indigo: #5B5FEF; --indigo-dim: #4347C4; --line: rgba(28, 30, 34, 0.12); --white: #FFFFFF;
+    --warning: #9A5B16; --warning-bg: #FFF8E8;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font-family: 'Inter', sans-serif; line-height: 1.55; }
+  button, select, input { font: inherit; }
+  button { cursor: pointer; }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
+  nav { border-bottom: 1px solid var(--line); background: rgba(246,244,238,.94); }
+  .nav-inner { min-height: 64px; display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+  .brand, .back, .eyebrow, h1, h2, h3, .btn, .stat-label, .stat-num, th, .badge, .privacy, .chart-label { font-family: 'JetBrains Mono', monospace; }
+  .brand { font-weight: 700; font-size: 15px; }
+  .back { color: var(--ink-soft); font-size: 12px; text-decoration: none; }
+  .back:hover { color: var(--indigo); }
+  header { padding: 64px 0 36px; }
+  .eyebrow { color: var(--indigo-dim); text-transform: uppercase; letter-spacing: .14em; font-size: 11px; font-weight: 600; }
+  h1 { font-size: clamp(30px, 5vw, 48px); line-height: 1.12; letter-spacing: -.025em; max-width: 780px; margin: 14px 0 16px; }
+  .intro { color: var(--ink-soft); font-size: 17px; max-width: 720px; margin: 0; }
+  .panel { background: var(--white); border: 1px solid var(--line); border-radius: 4px; padding: 24px; }
+  .upload-panel { margin-bottom: 22px; }
+  .drop-zone { border: 1.5px dashed rgba(91,95,239,.55); border-radius: 4px; padding: 38px 24px; text-align: center; background: #FBFBFF; transition: border-color .15s, background .15s; }
+  .drop-zone.dragging { border-color: var(--indigo); background: #F1F1FF; }
+  .drop-icon { width: 46px; height: 46px; margin: 0 auto 14px; display: grid; place-items: center; border-radius: 50%; color: var(--indigo); background: rgba(91,95,239,.1); font-size: 23px; }
+  .drop-zone h2 { font-size: 16px; margin: 0 0 7px; }
+  .drop-zone p { color: var(--ink-soft); font-size: 13px; margin: 0 0 18px; }
+  .actions { display: flex; justify-content: center; flex-wrap: wrap; gap: 10px; }
+  .btn { border: 1px solid var(--ink); border-radius: 3px; padding: 10px 16px; font-weight: 600; font-size: 12px; background: transparent; color: var(--ink); }
+  .btn:hover { transform: translateY(-1px); }
+  .btn-primary { background: var(--ink); color: var(--paper); }
+  .btn-indigo { background: var(--indigo); border-color: var(--indigo); color: white; }
+  .btn:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+  #fileInput { position: absolute; width: 1px; height: 1px; opacity: 0; }
+  .privacy { font-size: 10px; color: var(--ink-soft); text-align: center; margin: 13px 0 0; }
+  .privacy::before { content: '●'; color: #438A65; margin-right: 7px; }
+  .mapping { margin-bottom: 22px; border-left: 3px solid var(--indigo); }
+  .mapping h2, .section-head h2 { font-size: 16px; margin: 0 0 5px; }
+  .mapping > p, .section-head p { margin: 0; color: var(--ink-soft); font-size: 13px; }
+  .mapping-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(190px,1fr)); gap: 14px; margin: 20px 0; }
+  .mapping label { display: block; font-size: 12px; font-weight: 600; margin-bottom: 5px; }
+  select { width: 100%; padding: 9px; border: 1px solid var(--line); background: white; border-radius: 3px; }
+  .results { display: none; }
+  .results.visible { display: block; }
+  .file-bar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 18px; }
+  .file-meta { font-size: 13px; color: var(--ink-soft); }
+  .file-meta strong { color: var(--ink); }
+  .stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; margin-bottom: 18px; }
+  .stat-card { background: var(--white); border: 1px solid var(--line); border-radius: 4px; padding: 20px; }
+  .stat-label { color: var(--ink-soft); font-size: 10px; text-transform: uppercase; letter-spacing: .1em; }
+  .stat-num { color: var(--indigo); font-size: clamp(22px,4vw,32px); font-weight: 700; margin-top: 7px; font-variant-numeric: tabular-nums; }
+  .report-grid { display: grid; grid-template-columns: 1.55fr 1fr; gap: 18px; margin-bottom: 18px; }
+  .section-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
+  .badge { background: var(--paper-dim); color: var(--ink-soft); border-radius: 20px; padding: 4px 9px; font-size: 9px; text-transform: uppercase; letter-spacing: .06em; white-space: nowrap; }
+  .chart-wrap { min-height: 250px; overflow-x: auto; }
+  svg { width: 100%; min-width: 480px; display: block; }
+  .grid-line { stroke: var(--line); stroke-width: 1; }
+  .bar { fill: var(--indigo); }
+  .bar:hover { fill: var(--indigo-dim); }
+  .chart-label { font-size: 9px; fill: var(--ink-soft); }
+  .rank-list { list-style: none; margin: 0; padding: 0; }
+  .rank-list li { display: grid; grid-template-columns: 22px 1fr auto; gap: 8px; align-items: center; padding: 11px 0; border-bottom: 1px solid var(--line); font-size: 13px; }
+  .rank-list li:last-child { border-bottom: 0; }
+  .rank { color: var(--indigo); font-family: 'JetBrains Mono'; font-size: 11px; }
+  .rank-value { font-family: 'JetBrains Mono'; font-weight: 600; font-size: 11px; }
+  .lists { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  .table-panel { margin-bottom: 18px; }
+  .table-scroll { overflow: auto; max-height: 430px; border: 1px solid var(--line); border-radius: 3px; }
+  table { border-collapse: collapse; width: 100%; min-width: 700px; font-size: 12px; }
+  th { position: sticky; top: 0; background: var(--paper-dim); text-align: left; font-size: 10px; letter-spacing: .06em; text-transform: uppercase; z-index: 1; }
+  th, td { padding: 11px 13px; border-bottom: 1px solid var(--line); }
+  tbody tr:last-child td { border-bottom: 0; }
+  td.num { font-family: 'JetBrains Mono'; text-align: right; font-variant-numeric: tabular-nums; }
+  .review-panel { border-color: rgba(154,91,22,.3); background: var(--warning-bg); }
+  .problem { color: var(--warning); font-weight: 600; }
+  .empty { color: var(--ink-soft); font-size: 13px; padding: 18px 0 4px; }
+  footer { padding: 34px 0 52px; font-size: 11px; color: var(--ink-soft); text-align: center; font-family: 'JetBrains Mono'; }
+  [hidden] { display: none !important; }
+  @media(max-width:780px) { .report-grid, .lists { grid-template-columns: 1fr; } header { padding-top: 42px; } }
+  @media(max-width:560px) { .stats { grid-template-columns: 1fr; } .wrap { padding: 0 16px; } .panel { padding: 18px; } .stat-card { padding: 15px; } }
+</style>
+</head>
+<body>
+<nav><div class="wrap nav-inner"><span class="brand">JAMES DAY / TOOLS</span><a class="back" href="index.html">← Back to portfolio</a></div></nav>
+<header class="wrap">
+  <div class="eyebrow">Browser-based data cleanup</div>
+  <h1>Turn messy order data into a clear report.</h1>
+  <p class="intro">Upload a CSV to remove duplicates, standardize names, catch incomplete rows, and see the numbers that matter—all without your data leaving this browser.</p>
+</header>
+<main class="wrap">
+  <section class="panel upload-panel" aria-labelledby="uploadTitle">
+    <div class="drop-zone" id="dropZone">
+      <div class="drop-icon" aria-hidden="true">⇧</div>
+      <h2 id="uploadTitle">Drop your orders CSV here</h2>
+      <p>CSV files only · expected fields: date, customer, product, quantity, amount</p>
+      <div class="actions">
+        <label class="btn btn-primary" for="fileInput">Choose CSV file</label>
+        <input id="fileInput" type="file" accept=".csv,text/csv">
+        <button class="btn" id="sampleBtn" type="button">Try sample data</button>
+      </div>
+    </div>
+    <p class="privacy">Private by design — processing happens entirely on your device.</p>
+  </section>
+
+  <section class="panel mapping" id="mappingPanel" hidden aria-labelledby="mappingTitle">
+    <h2 id="mappingTitle">Match your columns</h2>
+    <p>We couldn't identify every field. Pick the matching column from your file, then continue.</p>
+    <div class="mapping-grid" id="mappingGrid"></div>
+    <button class="btn btn-indigo" id="applyMapping" type="button">Build report</button>
+  </section>
+
+  <div class="results" id="results">
+    <div class="file-bar">
+      <div class="file-meta"><strong id="fileName"></strong> · <span id="cleanupNote"></span></div>
+      <button class="btn btn-indigo" id="exportBtn" type="button">Download cleaned CSV</button>
+    </div>
+    <section class="stats" aria-label="Order summary">
+      <article class="stat-card"><div class="stat-label">Total revenue</div><div class="stat-num" id="totalRevenue">$0.00</div></article>
+      <article class="stat-card"><div class="stat-label">Order count</div><div class="stat-num" id="orderCount">0</div></article>
+      <article class="stat-card"><div class="stat-label">Average order value</div><div class="stat-num" id="averageOrder">$0.00</div></article>
+    </section>
+    <div class="report-grid">
+      <section class="panel">
+        <div class="section-head"><div><h2>Revenue over time</h2><p id="chartSubtitle"></p></div><span class="badge" id="chartMode">Daily</span></div>
+        <div class="chart-wrap" id="chart" aria-label="Bar chart of revenue over time"></div>
+      </section>
+      <div class="lists">
+        <section class="panel"><div class="section-head"><div><h2>Top customers</h2><p>By total spend</p></div></div><ol class="rank-list" id="customers"></ol></section>
+        <section class="panel"><div class="section-head"><div><h2>Top products</h2><p>By quantity sold</p></div></div><ol class="rank-list" id="products"></ol></section>
+      </div>
+    </div>
+    <section class="panel table-panel">
+      <div class="section-head"><div><h2>Cleaned orders</h2><p>Trimmed, normalized, and deduplicated.</p></div><span class="badge" id="cleanCount"></span></div>
+      <div class="table-scroll"><table><thead><tr><th>Date</th><th>Customer</th><th>Product</th><th>Quantity</th><th>Amount</th></tr></thead><tbody id="cleanBody"></tbody></table></div>
+    </section>
+    <section class="panel review-panel">
+      <div class="section-head"><div><h2>Needs review</h2><p>Incomplete or invalid rows are kept here, not discarded.</p></div><span class="badge" id="reviewCount"></span></div>
+      <div id="reviewContent"></div>
+    </section>
+  </div>
+</main>
+<footer>Built for practical, repeatable cleanup · No uploads · No storage</footer>
+<script>
+(() => {
+  'use strict';
+  const fields = ['date', 'customer', 'product', 'quantity', 'amount'];
+  const aliases = {
+    date: ['date', 'order date', 'transaction date', 'sale date'], customer: ['customer', 'customer name', 'client', 'buyer'],
+    product: ['product', 'product name', 'item', 'item name', 'description'], quantity: ['quantity', 'qty', 'units', 'count'],
+    amount: ['amount', 'price', 'total', 'order total', 'sale amount', 'revenue']
+  };
+  const $ = id => document.getElementById(id);
+  let source = { headers: [], rows: [], filename: '' }, cleaned = [], review = [], duplicateCount = 0;
+
+  const sample = `Date, Customer ,Item,Quantity,Total
+2026-05-01,  JOHN smith,Canvas Tote,2,48.00
+2026-05-01,Aisha KHAN,Desk Planner,1,32.00
+2026-05-02,MARIA garcia,Notebook Set,3,54.00
+2026-05-03,liam o'neal,Canvas Tote,1,24.00
+2026-05-03,John Smith,Pen Set,2,28.00
+2026-05-04,CHEN WEI,Desk Planner,2,64.00
+2026-05-05,Aisha Khan,Notebook Set,1,18.00
+2026-05-06,Maria Garcia,Canvas Tote,3,72.00
+2026-05-07,Liam O'Neal,Pen Set,1,14.00
+2026-05-08,Chen Wei,Notebook Set,4,72.00
+2026-05-09,SOFIA brown,Desk Planner,1,32.00
+2026-05-10,noah WILSON,Canvas Tote,2,48.00
+2026-05-11,John Smith,Notebook Set,2,36.00
+2026-05-12,Aisha Khan,Pen Set,3,42.00
+2026-05-13,Maria Garcia,Desk Planner,2,64.00
+2026-05-14,Liam O'Neal,Canvas Tote,2,48.00
+2026-05-15,Chen Wei,Pen Set,2,28.00
+2026-05-16,Sofia Brown,Notebook Set,1,18.00
+2026-05-17,Noah Wilson,Desk Planner,3,96.00
+2026-05-18,John Smith,Canvas Tote,1,24.00
+2026-05-19,Aisha Khan,Desk Planner,2,64.00
+2026-05-20,Maria Garcia,Pen Set,4,56.00
+2026-05-21,Liam O'Neal,Notebook Set,2,36.00
+2026-05-22,Chen Wei,Canvas Tote,1,24.00
+2026-05-23,Sofia Brown,Pen Set,2,28.00
+2026-05-24,Noah Wilson,Notebook Set,3,54.00
+2026-05-25,John Smith,Desk Planner,1,32.00
+2026-05-26,Aisha Khan,Canvas Tote,2,48.00
+2026-05-27,Maria Garcia,Notebook Set,2,36.00
+2026-05-28,Liam O'Neal,Desk Planner,1,32.00
+2026-05-29,Chen Wei,Pen Set,3,42.00
+2026-05-30,Sofia Brown,Canvas Tote,2,48.00
+2026-05-31,Noah Wilson,Desk Planner,1,32.00
+2026-05-31,Noah Wilson,Desk Planner,1,32.00
+,John Smith,Canvas Tote,1,24.00
+2026-06-01,Aisha Khan,Notebook Set,2,
+2026-06-02,,Pen Set,1,14.00`;
+
+  function parseCSV(text) {
+    const output = []; let row = [], cell = '', quoted = false;
+    text = text.replace(/^\uFEFF/, '');
+    for (let i = 0; i < text.length; i++) {
+      const char = text[i];
+      if (quoted) {
+        if (char === '"' && text[i + 1] === '"') { cell += '"'; i++; }
+        else if (char === '"') quoted = false; else cell += char;
+      } else if (char === '"') quoted = true;
+      else if (char === ',') { row.push(cell); cell = ''; }
+      else if (char === '\n') { row.push(cell); if (row.some(v => v.trim())) output.push(row); row = []; cell = ''; }
+      else if (char !== '\r') cell += char;
+    }
+    row.push(cell); if (row.some(v => v.trim())) output.push(row);
+    if (!output.length) throw new Error('This CSV appears to be empty.');
+    const headers = output.shift().map((h, i) => h.trim() || `Column ${i + 1}`);
+    return { headers, rows: output.map(r => headers.map((_, i) => (r[i] || '').trim())) };
+  }
+
+  function normalizeHeader(value) { return value.toLowerCase().replace(/[_-]+/g, ' ').replace(/\s+/g, ' ').trim(); }
+  function autoMap(headers) {
+    const normalized = headers.map(normalizeHeader), map = {};
+    fields.forEach(field => { const index = normalized.findIndex(h => aliases[field].includes(h)); if (index >= 0) map[field] = index; });
+    return map;
+  }
+  function titleCase(value) {
+    return value.toLocaleLowerCase().replace(/(^|[\s\-/'])\p{L}/gu, match => match.toLocaleUpperCase());
+  }
+  function numeric(value) {
+    const clean = value.replace(/[$£€,%\s]/g, '').replace(/,(?=\d{3}(?:\D|$))/g, '');
+    return clean === '' ? NaN : Number(clean);
+  }
+  function parsedDate(value) {
+    if (!value) return null;
+    const iso = value.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+    if (iso) { const d = new Date(Date.UTC(+iso[1], +iso[2] - 1, +iso[3])); return d.getUTCMonth() === +iso[2] - 1 ? d : null; }
+    const d = new Date(value); return Number.isNaN(d.valueOf()) ? null : new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  }
+  function isoDate(date) { return date.toISOString().slice(0, 10); }
+  function money(value) { return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value); }
+  function escapeHTML(value) { const div = document.createElement('div'); div.textContent = String(value); return div.innerHTML; }
+
+  function loadText(text, filename) {
+    try {
+      const parsed = parseCSV(text); source = { ...parsed, filename }; const map = autoMap(parsed.headers);
+      const missing = fields.filter(field => map[field] === undefined);
+      if (missing.length) showMapping(map, missing); else process(map);
+    } catch (error) { alert(error.message); }
+  }
+  function showMapping(map, missing) {
+    $('results').classList.remove('visible'); $('mappingPanel').hidden = false; $('mappingGrid').innerHTML = '';
+    missing.forEach(field => {
+      const wrap = document.createElement('div'); const label = document.createElement('label'); const select = document.createElement('select');
+      label.textContent = `Column for ${field}`; label.htmlFor = `map-${field}`; select.id = `map-${field}`; select.dataset.field = field;
+      select.innerHTML = '<option value="">Choose a column…</option>' + source.headers.map((h, i) => `<option value="${i}">${escapeHTML(h)}</option>`).join('');
+      wrap.append(label, select); $('mappingGrid').append(wrap);
+    });
+    $('applyMapping').onclick = () => {
+      let valid = true; document.querySelectorAll('#mappingGrid select').forEach(select => { if (!select.value) valid = false; else map[select.dataset.field] = +select.value; });
+      if (!valid) { alert('Please match every field before continuing.'); return; } process(map);
+    };
+  }
+  function process(map) {
+    cleaned = []; review = []; duplicateCount = 0; const seen = new Set();
+    source.rows.forEach((raw, index) => {
+      const values = Object.fromEntries(fields.map(field => [field, (raw[map[field]] || '').trim()]));
+      values.customer = titleCase(values.customer); values.product = titleCase(values.product);
+      const date = parsedDate(values.date), quantity = numeric(values.quantity), amount = numeric(values.amount), problems = [];
+      if (!values.date) problems.push('missing date'); else if (!date) problems.push('invalid date');
+      if (!values.customer) problems.push('missing customer');
+      if (!values.product) problems.push('missing product');
+      if (!values.quantity) problems.push('missing quantity'); else if (!Number.isFinite(quantity) || quantity < 0) problems.push('invalid quantity');
+      if (!values.amount) problems.push('missing amount'); else if (!Number.isFinite(amount)) problems.push('invalid amount');
+      const item = { ...values, date: date ? isoDate(date) : values.date, quantity: Number.isFinite(quantity) ? quantity : values.quantity, amount: Number.isFinite(amount) ? amount : values.amount, problems, row: index + 2 };
+      const key = fields.map(field => String(item[field]).toLocaleLowerCase()).join('\u001f');
+      if (seen.has(key)) { duplicateCount++; return; } seen.add(key);
+      if (problems.length) review.push(item); else cleaned.push(item);
+    });
+    $('mappingPanel').hidden = true; render();
+  }
+
+  function render() {
+    $('results').classList.add('visible'); $('fileName').textContent = source.filename; $('cleanCount').textContent = `${cleaned.length} rows`;
+    $('reviewCount').textContent = `${review.length} ${review.length === 1 ? 'row' : 'rows'}`;
+    $('cleanupNote').textContent = `${duplicateCount} duplicate${duplicateCount === 1 ? '' : 's'} removed · ${review.length} flagged`;
+    const revenue = cleaned.reduce((sum, r) => sum + r.amount, 0);
+    $('totalRevenue').textContent = money(revenue); $('orderCount').textContent = cleaned.length.toLocaleString();
+    $('averageOrder').textContent = money(cleaned.length ? revenue / cleaned.length : 0);
+    renderRanks('customers', aggregate('customer', 'amount'), value => money(value));
+    renderRanks('products', aggregate('product', 'quantity'), value => `${value.toLocaleString()} units`);
+    renderChart(); renderTables();
+  }
+  function aggregate(key, metric) {
+    const totals = new Map(); cleaned.forEach(r => totals.set(r[key], (totals.get(r[key]) || 0) + r[metric]));
+    return [...totals].sort((a, b) => b[1] - a[1]).slice(0, 5);
+  }
+  function renderRanks(id, data, formatter) {
+    $(id).innerHTML = data.length ? data.map(([name, value], i) => `<li><span class="rank">0${i + 1}</span><span>${escapeHTML(name)}</span><span class="rank-value">${escapeHTML(formatter(value))}</span></li>`).join('') : '<li>No complete data</li>';
+  }
+  function monday(date) { const d = new Date(date); const day = d.getUTCDay() || 7; d.setUTCDate(d.getUTCDate() - day + 1); return d; }
+  function renderChart() {
+    if (!cleaned.length) { $('chart').innerHTML = '<p class="empty">No complete rows to chart.</p>'; return; }
+    const dates = cleaned.map(r => parsedDate(r.date)), min = new Date(Math.min(...dates)), maxDate = new Date(Math.max(...dates));
+    const daily = (maxDate - min) / 86400000 < 31, totals = new Map();
+    cleaned.forEach(r => { const d = parsedDate(r.date); const key = isoDate(daily ? d : monday(d)); totals.set(key, (totals.get(key) || 0) + r.amount); });
+    const points = [...totals].sort((a,b) => a[0].localeCompare(b[0])), max = Math.max(...points.map(p => p[1]), 1);
+    const width = Math.max(520, points.length * 28 + 68), height = 235, left = 48, top = 10, bottom = 38, plotH = height - top - bottom, plotW = width - left - 12;
+    let svg = `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="${daily ? 'Daily' : 'Weekly'} revenue bar chart">`;
+    for (let i = 0; i <= 4; i++) { const y = top + plotH * i / 4, value = max * (1 - i / 4); svg += `<line class="grid-line" x1="${left}" y1="${y}" x2="${width-12}" y2="${y}"/><text class="chart-label" x="${left-5}" y="${y+3}" text-anchor="end">$${Math.round(value)}</text>`; }
+    const slot = plotW / points.length, barW = Math.max(6, Math.min(22, slot * .62)), labelEvery = Math.max(1, Math.ceil(points.length / 8));
+    points.forEach(([date, value], i) => { const h = value / max * plotH, x = left + i * slot + (slot-barW)/2, y = top + plotH-h; svg += `<rect class="bar" x="${x}" y="${y}" width="${barW}" height="${h}" rx="2"><title>${date}: ${money(value)}</title></rect>`; if (i % labelEvery === 0) svg += `<text class="chart-label" x="${x+barW/2}" y="${height-17}" text-anchor="middle">${date.slice(5)}</text>`; });
+    svg += '</svg>'; $('chart').innerHTML = svg; $('chartMode').textContent = daily ? 'Daily' : 'Weekly';
+    $('chartSubtitle').textContent = `${points[0][0]} to ${points.at(-1)[0]}`;
+  }
+  function rowHTML(r, includeProblem = false) {
+    return `<tr><td>${escapeHTML(r.date)}</td><td>${escapeHTML(r.customer || '—')}</td><td>${escapeHTML(r.product || '—')}</td><td class="num">${escapeHTML(r.quantity || '—')}</td><td class="num">${typeof r.amount === 'number' ? money(r.amount) : '—'}</td>${includeProblem ? `<td class="problem">${escapeHTML(r.problems.join(', '))}</td>` : ''}</tr>`;
+  }
+  function renderTables() {
+    $('cleanBody').innerHTML = cleaned.map(r => rowHTML(r)).join('');
+    $('reviewContent').innerHTML = review.length ? `<div class="table-scroll"><table><thead><tr><th>Date</th><th>Customer</th><th>Product</th><th>Quantity</th><th>Amount</th><th>Problem</th></tr></thead><tbody>${review.map(r => rowHTML(r, true)).join('')}</tbody></table></div>` : '<p class="empty">Nothing needs review. Every unique row is complete.</p>';
+  }
+  function csvCell(value) { const text = String(value); return /[",\r\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text; }
+  function exportCSV() {
+    const content = [fields.join(','), ...cleaned.map(r => fields.map(field => csvCell(r[field])).join(','))].join('\r\n');
+    const blob = new Blob([content], { type: 'text/csv;charset=utf-8' }), link = document.createElement('a');
+    link.href = URL.createObjectURL(blob); link.download = `cleaned_${source.filename.replace(/\.csv$/i, '')}.csv`; link.click(); setTimeout(() => URL.revokeObjectURL(link.href), 0);
+  }
+  $('fileInput').addEventListener('change', event => { const file = event.target.files[0]; if (!file) return; if (!/\.csv$/i.test(file.name)) { alert('Please choose a CSV file.'); return; } const reader = new FileReader(); reader.onload = () => loadText(reader.result, file.name); reader.readAsText(file); });
+  ['dragenter','dragover'].forEach(name => $('dropZone').addEventListener(name, event => { event.preventDefault(); $('dropZone').classList.add('dragging'); }));
+  ['dragleave','drop'].forEach(name => $('dropZone').addEventListener(name, event => { event.preventDefault(); $('dropZone').classList.remove('dragging'); }));
+  $('dropZone').addEventListener('drop', event => { const file = event.dataTransfer.files[0]; if (!file || !/\.csv$/i.test(file.name)) { alert('Please drop a CSV file.'); return; } const reader = new FileReader(); reader.onload = () => loadText(reader.result, file.name); reader.readAsText(file); });
+  $('sampleBtn').addEventListener('click', () => loadText(sample, 'sample_orders.csv'));
+  $('exportBtn').addEventListener('click', exportCSV);
+})();
+</script>
+</body>
+</html>
