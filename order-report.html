@@ -230,7 +230,7 @@
     return value.toLocaleLowerCase().replace(/(^|[\s\-/'])\p{L}/gu, match => match.toLocaleUpperCase());
   }
   function numeric(value) {
-    const clean = value.replace(/[$£€,%\s]/g, '').replace(/,(?=\d{3}(?:\D|$))/g, '');
+    const clean = value.replace(/[$£€,%\s]/g, '');
     return clean === '' ? NaN : Number(clean);
   }
   function parsedDate(value) {
@@ -273,11 +273,12 @@
       if (!values.customer) problems.push('missing customer');
       if (!values.product) problems.push('missing product');
       if (!values.quantity) problems.push('missing quantity'); else if (!Number.isFinite(quantity) || quantity < 0) problems.push('invalid quantity');
-      if (!values.amount) problems.push('missing amount'); else if (!Number.isFinite(amount)) problems.push('invalid amount');
+      if (!values.amount) problems.push('missing amount'); else if (!Number.isFinite(amount) || amount < 0) problems.push('invalid amount');
       const item = { ...values, date: date ? isoDate(date) : values.date, quantity: Number.isFinite(quantity) ? quantity : values.quantity, amount: Number.isFinite(amount) ? amount : values.amount, problems, row: index + 2 };
+      if (problems.length) { review.push(item); return; }
       const key = fields.map(field => String(item[field]).toLocaleLowerCase()).join('\u001f');
       if (seen.has(key)) { duplicateCount++; return; } seen.add(key);
-      if (problems.length) review.push(item); else cleaned.push(item);
+      cleaned.push(item);
     });
     $('mappingPanel').hidden = true; render();
   }
@@ -303,7 +304,8 @@
   function monday(date) { const d = new Date(date); const day = d.getUTCDay() || 7; d.setUTCDate(d.getUTCDate() - day + 1); return d; }
   function renderChart() {
     if (!cleaned.length) { $('chart').innerHTML = '<p class="empty">No complete rows to chart.</p>'; return; }
-    const dates = cleaned.map(r => parsedDate(r.date)), min = new Date(Math.min(...dates)), maxDate = new Date(Math.max(...dates));
+    const times = cleaned.map(r => parsedDate(r.date).getTime());
+    const min = new Date(times.reduce((a, b) => Math.min(a, b))), maxDate = new Date(times.reduce((a, b) => Math.max(a, b)));
     const daily = (maxDate - min) / 86400000 < 31, totals = new Map();
     cleaned.forEach(r => { const d = parsedDate(r.date); const key = isoDate(daily ? d : monday(d)); totals.set(key, (totals.get(key) || 0) + r.amount); });
     const points = [...totals].sort((a,b) => a[0].localeCompare(b[0])), max = Math.max(...points.map(p => p[1]), 1);
@@ -316,7 +318,7 @@
     $('chartSubtitle').textContent = `${points[0][0]} to ${points.at(-1)[0]}`;
   }
   function rowHTML(r, includeProblem = false) {
-    return `<tr><td>${escapeHTML(r.date)}</td><td>${escapeHTML(r.customer || '—')}</td><td>${escapeHTML(r.product || '—')}</td><td class="num">${escapeHTML(r.quantity || '—')}</td><td class="num">${typeof r.amount === 'number' ? money(r.amount) : '—'}</td>${includeProblem ? `<td class="problem">${escapeHTML(r.problems.join(', '))}</td>` : ''}</tr>`;
+    return `<tr><td>${escapeHTML(r.date)}</td><td>${escapeHTML(r.customer || '—')}</td><td>${escapeHTML(r.product || '—')}</td><td class="num">${typeof r.quantity === 'number' ? escapeHTML(r.quantity.toLocaleString()) : escapeHTML(r.quantity || '—')}</td><td class="num">${typeof r.amount === 'number' ? money(r.amount) : '—'}</td>${includeProblem ? `<td class="problem">${escapeHTML(r.problems.join(', '))}</td>` : ''}</tr>`;
   }
   function renderTables() {
     $('cleanBody').innerHTML = cleaned.map(r => rowHTML(r)).join('');
